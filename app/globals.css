@@ -136,6 +136,23 @@ body {
   font-weight: 600;
 }
 
+.helper-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.input-hint {
+  margin: 0.5rem 0 0.8rem;
+  border: 1px dashed #bfd0ea;
+  border-radius: 10px;
+  background: #f6f9ff;
+  padding: 0.65rem;
+  color: #4b5d73;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+}
+
 .editor,
 .result {
   width: 100%;
