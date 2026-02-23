@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getEnvVar } from "../env";
 
 export interface AIRunOptions {
   cacheKey?: string;
@@ -8,11 +9,10 @@ export interface AIRunOptions {
   fallbackResponse?: string;
 }
 
-const defaultModel = process.env.AI_MODEL ?? "gpt-4o-mini";
 const cache = new Map<string, string>();
 
 function getClient() {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = getEnvVar("OPENAI_API_KEY");
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
@@ -29,7 +29,7 @@ export async function runAI(prompt: string, options: AIRunOptions = {}): Promise
     const client = getClient();
 
     const response = await client.chat.completions.create({
-      model: options.model ?? defaultModel,
+      model: options.model ?? getEnvVar("AI_MODEL") ?? "gpt-4o-mini",
       temperature: options.temperature ?? 0.2,
       max_tokens: options.maxTokens,
       messages: [{ role: "user", content: prompt }],

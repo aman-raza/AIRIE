@@ -12,7 +12,7 @@ npm install
 
 ### 2) Set environment variables
 
-Create `.env.local` in the project root:
+Create `.env.local` in the project root (or use `.en.local` for backward compatibility):
 
 ```bash
 OPENAI_API_KEY=your_key_here
