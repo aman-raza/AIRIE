@@ -98,7 +98,10 @@ export default function Page() {
   const [payload, setPayload] = useState<string>(activeTool.initialPayload);
   const [result, setResult] = useState<string>("Run a request to see the formatted JSON output.");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [jobDescription, setJobDescription] = useState("");
 
   function switchTool(nextId: ToolId) {
     const nextTool = TOOLS.find((t) => t.id === nextId);
@@ -143,6 +146,41 @@ export default function Page() {
     }
   }
 
+  async function analyzeUploadedResume() {
+    if (!resumeFile) {
+      setError("Choose a resume file first.");
+      return;
+    }
+
+    setError(null);
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.set("resume", resumeFile);
+      if (jobDescription.trim()) {
+        formData.set("jobDescription", jobDescription.trim());
+      }
+
+      const response = await fetch("/api/ai/resume-analyze", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data?.error ?? `Request failed (${response.status}).`);
+      }
+
+      setResult(JSON.stringify(data, null, 2));
+    } catch {
+      setError("Could not upload or analyze the resume file.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <main className="app-shell">
       <header className="hero">
@@ -179,6 +217,33 @@ export default function Page() {
           <label htmlFor="payload" className="label">
             Request JSON
           </label>
+
+          <div className="upload-box">
+            <p className="upload-heading">Resume upload analysis</p>
+            <p className="upload-copy">
+              Upload a resume (.pdf, .doc, .docx) to auto extract text and run AI analysis.
+            </p>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(event) => setResumeFile(event.target.files?.[0] ?? null)}
+            />
+            <textarea
+              className="editor upload-job"
+              placeholder="Optional: paste job description for fit scoring"
+              value={jobDescription}
+              onChange={(event) => setJobDescription(event.target.value)}
+            />
+            <button
+              type="button"
+              className="run-btn"
+              onClick={analyzeUploadedResume}
+              disabled={uploading}
+            >
+              {uploading ? "Analyzing..." : "Analyze uploaded resume"}
+            </button>
+          </div>
+
           <textarea
             id="payload"
             className="editor"
