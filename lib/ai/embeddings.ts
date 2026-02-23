@@ -1,11 +1,10 @@
 import OpenAI from "openai";
+import { getEnvVar } from "../env";
 import { sanitizeText } from "./validation";
 import { DuplicateCheckResult } from "./types";
 
-const embeddingModel = process.env.AI_EMBEDDING_MODEL ?? "text-embedding-3-small";
-
 function getClient() {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = getEnvVar("OPENAI_API_KEY");
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
@@ -16,7 +15,7 @@ function getClient() {
 export async function embed(text: string): Promise<number[]> {
   const client = getClient();
   const response = await client.embeddings.create({
-    model: embeddingModel,
+    model: getEnvVar("AI_EMBEDDING_MODEL") ?? "text-embedding-3-small",
     input: sanitizeText(text),
   });
 
