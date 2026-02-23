@@ -23,8 +23,8 @@ type ToolConfig = {
 const TOOLS: ToolConfig[] = [
   {
     id: "score",
-    title: "Resume Score",
-    description: "Scores resume fit against a job description.",
+    title: "Check Resume Match",
+    description: "See how well a resume matches a job post.",
     endpoint: "/api/ai/score",
     placeholder: "{\n  \"resume\": \"...\",\n  \"job\": \"...\"\n}",
     initialPayload:
@@ -32,8 +32,8 @@ const TOOLS: ToolConfig[] = [
   },
   {
     id: "summary",
-    title: "Resume Summary",
-    description: "Generates concise candidate summaries.",
+    title: "Create Resume Summary",
+    description: "Turn resume text into a short summary.",
     endpoint: "/api/ai/summary",
     placeholder: '{\n  "resume": "..."\n}',
     initialPayload:
@@ -41,8 +41,8 @@ const TOOLS: ToolConfig[] = [
   },
   {
     id: "questions",
-    title: "Interview Questions",
-    description: "Creates technical, behavioral, and scenario questions.",
+    title: "Make Interview Questions",
+    description: "Generate interview questions for a role.",
     endpoint: "/api/ai/questions",
     placeholder:
       '{\n  "role": "Frontend Engineer",\n  "level": "Senior",\n  "skills": ["React", "TypeScript"]\n}',
@@ -51,8 +51,8 @@ const TOOLS: ToolConfig[] = [
   },
   {
     id: "email",
-    title: "Recruiter Email",
-    description: "Drafts tailored outreach emails.",
+    title: "Write Outreach Email",
+    description: "Create a ready-to-send recruiter email.",
     endpoint: "/api/ai/email",
     placeholder:
       '{\n  "purpose": "Initial outreach",\n  "tone": "Friendly",\n  "name": "Alex",\n  "role": "Product Engineer",\n  "extra": "Remote-first"\n}',
@@ -61,8 +61,8 @@ const TOOLS: ToolConfig[] = [
   },
   {
     id: "skill-gap",
-    title: "Skill Gap",
-    description: "Identifies missing skills and learning plan.",
+    title: "Find Missing Skills",
+    description: "Compare current skills with job needs.",
     endpoint: "/api/ai/skill-gap",
     placeholder:
       '{\n  "candidateSkills": ["React", "CSS"],\n  "jobRequirements": ["React", "TypeScript", "Testing"]\n}',
@@ -71,8 +71,8 @@ const TOOLS: ToolConfig[] = [
   },
   {
     id: "duplicate-check",
-    title: "Duplicate Check",
-    description: "Compares embeddings to flag duplicate candidates.",
+    title: "Check Duplicate Candidate",
+    description: "Flag resumes that may be duplicates.",
     endpoint: "/api/ai/duplicate-check",
     placeholder:
       '{\n  "resumeText": "...",\n  "existingEmbeddings": [],\n  "threshold": 0.92\n}',
@@ -81,8 +81,8 @@ const TOOLS: ToolConfig[] = [
   },
   {
     id: "rank",
-    title: "Candidate Rank",
-    description: "Ranks candidates via weighted hybrid score.",
+    title: "Rank Candidates",
+    description: "Sort candidates by fit for a role.",
     endpoint: "/api/ai/rank",
     placeholder:
       '{\n  "candidates": [],\n  "jobSkills": ["React"],\n  "preferredYears": 4\n}',
@@ -91,12 +91,14 @@ const TOOLS: ToolConfig[] = [
   },
 ];
 
+const defaultResult = "Click \"Run Tool\" to view results here.";
+
 export default function Page() {
   const [activeToolId, setActiveToolId] = useState<ToolId>("score");
   const activeTool = useMemo(() => TOOLS.find((tool) => tool.id === activeToolId)!, [activeToolId]);
 
   const [payload, setPayload] = useState<string>(activeTool.initialPayload);
-  const [result, setResult] = useState<string>("Run a request to see the formatted JSON output.");
+  const [result, setResult] = useState<string>(defaultResult);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export default function Page() {
     if (!nextTool) return;
     setActiveToolId(nextId);
     setPayload(nextTool.initialPayload);
-    setResult("Run a request to see the formatted JSON output.");
+    setResult(defaultResult);
     setError(null);
   }
 
@@ -119,7 +121,7 @@ export default function Page() {
     try {
       parsed = JSON.parse(payload);
     } catch {
-      setError("Payload must be valid JSON.");
+      setError("Please use valid JSON in the input box.");
       return;
     }
 
@@ -135,12 +137,12 @@ export default function Page() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(`Request failed (${response.status}).`);
+        setError(`Something went wrong (${response.status}).`);
       }
 
       setResult(JSON.stringify(data, null, 2));
     } catch {
-      setError("Could not reach the API route. Ensure the server is running.");
+      setError("Could not connect. Please make sure the app is running.");
     } finally {
       setLoading(false);
     }
@@ -148,7 +150,7 @@ export default function Page() {
 
   async function analyzeUploadedResume() {
     if (!resumeFile) {
-      setError("Choose a resume file first.");
+      setError("Please choose a resume file first.");
       return;
     }
 
@@ -170,12 +172,12 @@ export default function Page() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data?.error ?? `Request failed (${response.status}).`);
+        setError(data?.error ?? `Something went wrong (${response.status}).`);
       }
 
       setResult(JSON.stringify(data, null, 2));
     } catch {
-      setError("Could not upload or analyze the resume file.");
+      setError("Could not upload the file. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -184,8 +186,8 @@ export default function Page() {
   return (
     <main className="app-shell">
       <header className="hero">
-        <h1>AIRIE AI Console</h1>
-        <p>Modern minimal interface for testing and operating AI hiring workflows.</p>
+        <h1>AIRIE Hiring Helper</h1>
+        <p>Simple tools to review resumes and support hiring decisions.</p>
       </header>
 
       <section className="workspace">
@@ -198,7 +200,7 @@ export default function Page() {
               className={tool.id === activeToolId ? "tool-chip active" : "tool-chip"}
             >
               <span>{tool.title}</span>
-              <small>{tool.endpoint}</small>
+              <small>{tool.description}</small>
             </button>
           ))}
         </nav>
@@ -210,18 +212,18 @@ export default function Page() {
               <p>{activeTool.description}</p>
             </div>
             <button type="button" className="run-btn" onClick={run} disabled={loading}>
-              {loading ? "Running..." : "Run request"}
+              {loading ? "Running..." : "Run Tool"}
             </button>
           </div>
 
           <label htmlFor="payload" className="label">
-            Request JSON
+            Tool Input (JSON)
           </label>
 
           <div className="upload-box">
-            <p className="upload-heading">Resume upload analysis</p>
+            <p className="upload-heading">Upload Resume (Optional)</p>
             <p className="upload-copy">
-              Upload a resume (.pdf, .doc, .docx) to auto extract text and run AI analysis.
+              Add a resume file (.pdf, .doc, .docx) to auto-read it and get an AI review.
             </p>
             <input
               type="file"
@@ -230,7 +232,7 @@ export default function Page() {
             />
             <textarea
               className="editor upload-job"
-              placeholder="Optional: paste job description for fit scoring"
+              placeholder="Optional: Paste job description"
               value={jobDescription}
               onChange={(event) => setJobDescription(event.target.value)}
             />
@@ -240,7 +242,7 @@ export default function Page() {
               onClick={analyzeUploadedResume}
               disabled={uploading}
             >
-              {uploading ? "Analyzing..." : "Analyze uploaded resume"}
+              {uploading ? "Analyzing..." : "Analyze Resume"}
             </button>
           </div>
 
@@ -255,7 +257,7 @@ export default function Page() {
           {error && <p className="error">{error}</p>}
 
           <label htmlFor="result" className="label">
-            Response
+            Result
           </label>
           <pre id="result" className="result" aria-live="polite">
             {result}
